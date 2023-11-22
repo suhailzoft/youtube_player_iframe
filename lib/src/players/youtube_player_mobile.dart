@@ -42,7 +42,7 @@ class RawYoutubePlayer extends StatefulWidget {
     Key? key,
     required this.controller,
     this.gestureRecognizers,
-    this.inert,
+    required this.inert,
   }) : super(key: key);
 
   @override
@@ -171,101 +171,92 @@ class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
   }
 
   void _addHandlers(InAppWebViewController webController) {
-    webController
-      ..addJavaScriptHandler(
-        handlerName: 'Ready',
-        callback: (_) {
-          _isPlayerReady = true;
-          if (_onLoadStopCalled) {
-            _value = _value.copyWith(isReady: true);
-            controller.add(_value);
-          }
-        },
-      )
-      ..addJavaScriptHandler(
-        handlerName: 'StateChange',
-        callback: (args) {
-          switch (args.first as int) {
-            case -1:
-              _value = _value.copyWith(
-                playerState: PlayerState.unStarted,
-                isReady: true,
-              );
-              break;
-            case 0:
-              _value = _value.copyWith(playerState: PlayerState.ended);
-              break;
-            case 1:
-              _value = _value.copyWith(
-                playerState: PlayerState.playing,
-                hasPlayed: true,
-                error: YoutubeError.none,
-              );
-              break;
-            case 2:
-              _value = _value.copyWith(playerState: PlayerState.paused);
-              break;
-            case 3:
-              _value = _value.copyWith(playerState: PlayerState.buffering);
-              break;
-            case 5:
-              _value = _value.copyWith(playerState: PlayerState.cued);
-              break;
-            default:
-              throw Exception("Invalid player state obtained.");
-          }
+    webController..addJavaScriptHandler(
+      handlerName: 'Ready',
+      callback: (_) {
+        _isPlayerReady = true;
+        if (_onLoadStopCalled) {
+          _value = _value.copyWith(isReady: true);
           controller.add(_value);
-        },
-      )
-      ..addJavaScriptHandler(
-        handlerName: 'PlaybackQualityChange',
-        callback: (args) {
-          _value = _value.copyWith(playbackQuality: args.first as String);
-          controller.add(_value);
-        },
-      )
-      ..addJavaScriptHandler(
-        handlerName: 'PlaybackRateChange',
-        callback: (args) {
-          final num rate = args.first;
-          _value = _value.copyWith(playbackRate: rate.toDouble());
-          controller.add(_value);
-        },
-      )
-      ..addJavaScriptHandler(
-        handlerName: 'Errors',
-        callback: (args) {
-          _value = _value.copyWith(error: errorEnum(args.first as int));
-          controller.add(_value);
-        },
-      )
-      ..addJavaScriptHandler(
-        handlerName: 'VideoData',
-        callback: (args) {
-          _value = _value.copyWith(
-            metaData: YoutubeMetaData.fromRawData(args.first),
-          );
-          controller.add(_value);
-        },
-      )
-      ..addJavaScriptHandler(
-        handlerName: 'VideoTime',
-        callback: (args) {
-          final position = args.first * 1000;
-          final num buffered = args.last;
-          _value = _value.copyWith(
-            position: Duration(milliseconds: position.floor()),
-            buffered: buffered.toDouble(),
-          );
-          controller.add(_value);
-        },
-      );
+        }
+      },
+    )..addJavaScriptHandler(
+      handlerName: 'StateChange',
+      callback: (args) {
+        switch (args.first as int) {
+          case -1:
+            _value = _value.copyWith(
+              playerState: PlayerState.unStarted,
+              isReady: true,
+            );
+            break;
+          case 0:
+            _value = _value.copyWith(playerState: PlayerState.ended);
+            break;
+          case 1:
+            _value = _value.copyWith(
+              playerState: PlayerState.playing,
+              hasPlayed: true,
+              error: YoutubeError.none,
+            );
+            break;
+          case 2:
+            _value = _value.copyWith(playerState: PlayerState.paused);
+            break;
+          case 3:
+            _value = _value.copyWith(playerState: PlayerState.buffering);
+            break;
+          case 5:
+            _value = _value.copyWith(playerState: PlayerState.cued);
+            break;
+          default:
+            throw Exception("Invalid player state obtained.");
+        }
+        controller.add(_value);
+      },
+    )..addJavaScriptHandler(
+      handlerName: 'PlaybackQualityChange',
+      callback: (args) {
+        _value = _value.copyWith(playbackQuality: args.first as String);
+        controller.add(_value);
+      },
+    )..addJavaScriptHandler(
+      handlerName: 'PlaybackRateChange',
+      callback: (args) {
+        final num rate = args.first;
+        _value = _value.copyWith(playbackRate: rate.toDouble());
+        controller.add(_value);
+      },
+    )..addJavaScriptHandler(
+      handlerName: 'Errors',
+      callback: (args) {
+        _value = _value.copyWith(error: errorEnum(args.first as int));
+        controller.add(_value);
+      },
+    )..addJavaScriptHandler(
+      handlerName: 'VideoData',
+      callback: (args) {
+        _value = _value.copyWith(
+          metaData: YoutubeMetaData.fromRawData(args.first),
+        );
+        controller.add(_value);
+      },
+    )..addJavaScriptHandler(
+      handlerName: 'VideoTime',
+      callback: (args) {
+        final position = args.first * 1000;
+        final num buffered = args.last;
+        _value = _value.copyWith(
+          position: Duration(milliseconds: position.floor()),
+          buffered: buffered.toDouble(),
+        );
+        controller.add(_value);
+      },
+    );
   }
 
-  Future<NavigationActionPolicy?> _decideNavigationActionPolicy(
-    _,
-    NavigationAction action,
-  ) async {
+  Future<NavigationActionPolicy?> _decideNavigationActionPolicy(_,
+      NavigationAction action,) async {
     final uri = action.request.url;
     if (uri == null) return NavigationActionPolicy.CANCEL;
 
@@ -348,7 +339,8 @@ class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
     </body>
   ''';
 
-  String get userAgent => controller.params.desktopMode
-      ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36'
-      : '';
+  String get userAgent =>
+      controller.params.desktopMode
+          ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36'
+          : '';
 }
