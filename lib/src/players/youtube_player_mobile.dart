@@ -97,26 +97,15 @@ class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
         mimeType: 'text/html',
       ),
       gestureRecognizers: _gestureRecognizers,
-      initialOptions: InAppWebViewGroupOptions(
-        crossPlatform: InAppWebViewOptions(
-          userAgent: userAgent,
-          mediaPlaybackRequiresUserGesture: false,
-          transparentBackground: true,
-          disableContextMenu: true,
-          supportZoom: false,
-          disableHorizontalScroll: false,
-          disableVerticalScroll: false,
-          useShouldOverrideUrlLoading: true,
-        ),
-        ios: IOSInAppWebViewOptions(
-          allowsInlineMediaPlayback: true,
-          allowsAirPlayForMediaPlayback: true,
-          allowsPictureInPictureMediaPlayback: true,
-        ),
-        android: AndroidInAppWebViewOptions(
-          useWideViewPort: false,
-          useHybridComposition: controller.params.useHybridComposition,
-        ),
+      initialSettings: InAppWebViewSettings(
+        allowsInlineMediaPlayback: true,
+        mediaPlaybackRequiresUserGesture: false,
+        transparentBackground: true,
+        disableContextMenu: true,
+        supportZoom: false,
+        useShouldOverrideUrlLoading: true,
+        useWideViewPort: false,
+        useHybridComposition: controller.params.useHybridComposition,
       ),
       shouldOverrideUrlLoading: _decideNavigationActionPolicy,
       onWebViewCreated: (webController) {
