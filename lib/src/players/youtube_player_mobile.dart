@@ -125,10 +125,7 @@ class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
       },
       onConsoleMessage: (_, message) => log(message.message),
       onEnterFullscreen: (_) => controller.onEnterFullscreen?.call(),
-      onExitFullscreen: (_){
-        controller.play();
-        controller.onExitFullscreen?.call();
-      },
+      onExitFullscreen: (_) => controller.onExitFullscreen?.call(),
     );
   }
 
