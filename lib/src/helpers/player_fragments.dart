@@ -35,13 +35,10 @@ String youtubeIFrameTag(YoutubePlayerController controller) {
     'embed/${controller.initialVideoId}',
     params,
   );
+  
   return '<iframe id="player" type="text/html"'
-      ' style="position:absolute; top:0px; left:0px; bottom:0px; right:${kIsWeb ||
-      Platform.isAndroid ? "10px" : "0px"};'
-      ' ${kIsWeb ||
-      Platform.isAndroid
-      ? "width:100%; height:100%;"
-      : ""} border:none; margin:0; padding:0; overflow:hidden; z-index:999999;"'
+      ' style="position:absolute; top:0px; left:0px; bottom:0px; right:10px;'
+      ' width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;"'
       ' src="$sourceUri" frameborder="0" allowfullscreen></iframe>';
 }
 

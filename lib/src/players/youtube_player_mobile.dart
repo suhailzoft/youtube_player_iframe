@@ -4,7 +4,6 @@
 
 import 'dart:async';
 import 'dart:developer';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -106,6 +105,8 @@ class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
         useShouldOverrideUrlLoading: true,
         useWideViewPort: false,
         useHybridComposition: controller.params.useHybridComposition,
+        displayZoomControls: true,
+        isElementFullscreenEnabled: defaultTargetPlatform != TargetPlatform.iOS,
       ),
       shouldOverrideUrlLoading: _decideNavigationActionPolicy,
       onWebViewCreated: (webController) {
@@ -124,7 +125,10 @@ class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
       },
       onConsoleMessage: (_, message) => log(message.message),
       onEnterFullscreen: (_) => controller.onEnterFullscreen?.call(),
-      onExitFullscreen: (_) => controller.onExitFullscreen?.call(),
+      onExitFullscreen: (_){
+        controller.play();
+        controller.onExitFullscreen?.call();
+      },
     );
   }
 
