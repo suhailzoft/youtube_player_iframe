@@ -4,6 +4,7 @@
 
 import 'dart:async';
 import 'dart:developer';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -91,22 +92,31 @@ class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
       key: ValueKey(controller.hashCode),
       initialData: InAppWebViewInitialData(
         data: player,
-        baseUrl: WebUri.uri(_baseUrl),
+        baseUrl: _baseUrl,
         encoding: 'utf-8',
         mimeType: 'text/html',
       ),
       gestureRecognizers: _gestureRecognizers,
-      initialSettings: InAppWebViewSettings(
-        allowsInlineMediaPlayback: true,
-        mediaPlaybackRequiresUserGesture: false,
-        transparentBackground: true,
-        disableContextMenu: true,
-        supportZoom: false,
-        useShouldOverrideUrlLoading: true,
-        useWideViewPort: false,
-        useHybridComposition: controller.params.useHybridComposition,
-        displayZoomControls: true,
-        isElementFullscreenEnabled: defaultTargetPlatform != TargetPlatform.iOS,
+      initialOptions: InAppWebViewGroupOptions(
+        crossPlatform: InAppWebViewOptions(
+          userAgent: userAgent,
+          mediaPlaybackRequiresUserGesture: false,
+          transparentBackground: true,
+          disableContextMenu: true,
+          supportZoom: false,
+          disableHorizontalScroll: false,
+          disableVerticalScroll: false,
+          useShouldOverrideUrlLoading: true,
+        ),
+        ios: IOSInAppWebViewOptions(
+          allowsInlineMediaPlayback: true,
+          allowsAirPlayForMediaPlayback: true,
+          allowsPictureInPictureMediaPlayback: true,
+        ),
+        android: AndroidInAppWebViewOptions(
+          useWideViewPort: false,
+          useHybridComposition: controller.params.useHybridComposition,
+        ),
       ),
       shouldOverrideUrlLoading: _decideNavigationActionPolicy,
       onWebViewCreated: (webController) {
