@@ -4,7 +4,6 @@
 
 import 'dart:async';
 import 'dart:developer';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -52,7 +51,8 @@ class RawYoutubePlayer extends StatefulWidget {
 class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
     with WidgetsBindingObserver {
   late final YoutubePlayerController controller;
-  late final Completer<InAppWebViewController> _webController;
+  late InAppWebViewController _webController;
+  late final Completer<InAppWebViewController> _webControllerCompleter;
   PlayerState? _cachedPlayerState;
   bool _isPlayerReady = false;
   bool _onLoadStopCalled = false;
@@ -61,7 +61,7 @@ class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
   @override
   void initState() {
     super.initState();
-    _webController = Completer();
+    _webControllerCompleter = Completer();
     controller = widget.controller;
     _value = controller.value;
     WidgetsBinding.instance.addObserver(this);
@@ -92,36 +92,28 @@ class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
       key: ValueKey(controller.hashCode),
       initialData: InAppWebViewInitialData(
         data: player,
-        baseUrl: _baseUrl,
+        baseUrl: WebUri.uri(_baseUrl),
         encoding: 'utf-8',
         mimeType: 'text/html',
       ),
       gestureRecognizers: _gestureRecognizers,
-      initialOptions: InAppWebViewGroupOptions(
-        crossPlatform: InAppWebViewOptions(
-          userAgent: userAgent,
-          mediaPlaybackRequiresUserGesture: false,
-          transparentBackground: true,
-          disableContextMenu: true,
-          supportZoom: false,
-          disableHorizontalScroll: false,
-          disableVerticalScroll: false,
-          useShouldOverrideUrlLoading: true,
-        ),
-        ios: IOSInAppWebViewOptions(
-          allowsInlineMediaPlayback: true,
-          allowsAirPlayForMediaPlayback: true,
-          allowsPictureInPictureMediaPlayback: true,
-        ),
-        android: AndroidInAppWebViewOptions(
-          useWideViewPort: false,
-          useHybridComposition: controller.params.useHybridComposition,
-        ),
+      initialSettings: InAppWebViewSettings(
+        allowsInlineMediaPlayback: true,
+        mediaPlaybackRequiresUserGesture: false,
+        transparentBackground: true,
+        disableContextMenu: true,
+        supportZoom: false,
+        useShouldOverrideUrlLoading: true,
+        useWideViewPort: false,
+        useHybridComposition: controller.params.useHybridComposition,
+        displayZoomControls: true,
+        isElementFullscreenEnabled: true,
       ),
       shouldOverrideUrlLoading: _decideNavigationActionPolicy,
       onWebViewCreated: (webController) {
-        if (!_webController.isCompleted) {
-          _webController.complete(webController);
+        _webController = webController;
+        if (!_webControllerCompleter.isCompleted) {
+          _webControllerCompleter.complete(webController);
         }
         controller.invokeJavascript = _callMethod;
         _addHandlers(webController);
@@ -134,8 +126,18 @@ class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
         }
       },
       onConsoleMessage: (_, message) => log(message.message),
-      onEnterFullscreen: (_) => controller.onEnterFullscreen?.call(),
-      onExitFullscreen: (_) => controller.onExitFullscreen?.call(),
+      onEnterFullscreen: (_) {
+        _webController?.evaluateJavascript(
+          source: 'document.getElementById("player").style = "position:absolute; top:0px; left:0px; bottom:0px; right:0px;  border:none; margin:0; padding:0; overflow:hidden; z-index:999999;"',
+        );
+        controller.onEnterFullscreen?.call();
+      },
+      onExitFullscreen: (_) {
+        _webController?.evaluateJavascript(
+          source: 'document.getElementById("player").style = "position:absolute; top:0px; left:0px; bottom:0px; right:10px;width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;"',
+        );
+        controller.onExitFullscreen?.call();
+        },
     );
   }
 
@@ -166,7 +168,7 @@ class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
   }
 
   Future<void> _callMethod(String methodName) async {
-    final webController = await _webController.future;
+    final webController = await _webControllerCompleter.future;
     webController.evaluateJavascript(source: methodName);
   }
 
