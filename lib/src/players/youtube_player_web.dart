@@ -185,7 +185,7 @@ class _WebYoutubePlayerState extends State<RawYoutubePlayer> {
   String get player => '''
     <!DOCTYPE html>
     <body>
-        ${youtubeIFrameTag(controller)}
+        ${youtubeIFrameTag(context: context,controller: controller)}
         <script>
             $initPlayerIFrame
             var player;

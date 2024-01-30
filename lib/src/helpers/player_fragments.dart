@@ -1,9 +1,11 @@
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
+import 'package:flutter/material.dart';
 
 ///
-String youtubeIFrameTag(YoutubePlayerController controller) {
+String youtubeIFrameTag(
+    {required BuildContext context, required YoutubePlayerController controller, double? width, double? height}) {
   final params = <String, String>{
     'autoplay': _boolean(controller.params.autoPlay),
     'mute': _boolean(controller.params.mute),
@@ -38,7 +40,7 @@ String youtubeIFrameTag(YoutubePlayerController controller) {
   return '<iframe id="player" type="text/html"'
       ' style="position:absolute; top:0px; left:0px; bottom:0px; right:10px;'
       ' width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;"'
-      ' src="$sourceUri" frameborder="0" allowfullscreen></iframe>';
+      ' src="$sourceUri" frameborder="0" allowfullscreen ></iframe>';
 }
 
 ///

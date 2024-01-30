@@ -5,17 +5,18 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/foundation.dart';
+import 'dart:io';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
-
 import '../controller.dart';
 import '../enums/player_state.dart';
 import '../enums/youtube_error.dart';
 import '../helpers/player_fragments.dart';
 import '../meta_data.dart';
 import '../player_value.dart';
+import 'dart:convert';
 
 /// A youtube player widget which interacts with the underlying webview inorder to play YouTube videos.
 ///
@@ -57,6 +58,8 @@ class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
   bool _isPlayerReady = false;
   bool _onLoadStopCalled = false;
   late YoutubePlayerValue _value;
+  int? iframeHeight;
+  int? iframeWidth;
 
   @override
   void initState() {
@@ -127,17 +130,19 @@ class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
       },
       onConsoleMessage: (_, message) => log(message.message),
       onEnterFullscreen: (_) {
+        print("onEnterFullscreen");
         _webController?.evaluateJavascript(
           source: 'document.getElementById("player").style = "position:absolute; top:0px; left:0px; bottom:0px; right:0px;  border:none; margin:0; padding:0; overflow:hidden; z-index:999999;"',
         );
         controller.onEnterFullscreen?.call();
       },
       onExitFullscreen: (_) {
-        _webController?.evaluateJavascript(
-          source: 'document.getElementById("player").style = "position:absolute; top:0px; left:0px; bottom:0px; right:10px;width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;"',
-        );
+        print("onExitFullscreen $iframeHeight");
+        _webController.evaluateJavascript(source: """
+  iframe.style.cssText = 'position:absolute; top:0px; left:0px; bottom:0px; right:10px; width:' + $iframeWidth + 'px; height:' + $iframeHeight + 'px; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;';
+""");
         controller.onExitFullscreen?.call();
-        },
+      },
     );
   }
 
@@ -173,9 +178,33 @@ class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
   }
 
   void _addHandlers(InAppWebViewController webController) {
+    webController
+      ..addJavaScriptHandler(handlerName: 'iframeHeight', callback: (message) {
+        if (message.isNotEmpty && (message[0] is int)) {
+          iframeHeight = message[0];
+        }
+      },);
+    webController
+      ..addJavaScriptHandler(handlerName: 'iframeWidth', callback: (message) {
+        if (message.isNotEmpty && (message[0] is int)) {
+          iframeWidth = message[0];
+        }
+      },);
     webController..addJavaScriptHandler(
       handlerName: 'Ready',
       callback: (_) {
+        _webController.evaluateJavascript(source: """
+  var iframe = document.getElementById('player');
+  var iframeHeight = iframe.clientHeight;
+  var iframeWidth = iframe.clientWidth;
+  console.log('Iframe height: ' + iframeHeight);
+  window.flutter_inappwebview.callHandler('iframeHeight', iframeHeight).then(function(result) {
+    console.log('dsfdsf' + result);
+  });
+  window.flutter_inappwebview.callHandler('iframeWidth', iframeWidth).then(function(result) {
+    console.log('dsfdsf' + result);
+  });
+""");
         _isPlayerReady = true;
         if (_onLoadStopCalled) {
           _value = _value.copyWith(isReady: true);
@@ -293,8 +322,12 @@ class _MobileYoutubePlayerState extends State<RawYoutubePlayer>
 
   String get player => '''
     <!DOCTYPE html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
     <body>
-         ${youtubeIFrameTag(controller)}
+         ${youtubeIFrameTag(context: context,
+    controller: controller,)}
         <script>
             $initPlayerIFrame
             var player;
